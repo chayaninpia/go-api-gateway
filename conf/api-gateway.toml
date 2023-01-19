@@ -1,0 +1,146 @@
+
+[apigw]
+  serverAddress = "http://127.0.0.1"
+  serverPort = 30001
+  rateLimit = 100
+  crypto = "nkjnj32nof2hee98hneni2oi0923ujcdkjw09f032jocj0w9j9020j2jf"
+
+[kafka]
+  serverAddress = "localhost"
+#stock
+[[httpRoutes]]
+  url = "http://deploy-go-backend-1"
+  port = 9997
+  serviceId = "read-stock"
+  path = "/v1/product/stock/read"
+  method = "GET"
+
+[[httpRoutes]]
+  url = "http://deploy-go-backend-1"
+  port = 9997
+  serviceId = "update-stock"
+  path = "/v1/product/stock/update"
+  method = "PUT"
+
+#item
+[[httpRoutes]]
+  url = "http://deploy-go-backend-1"
+  port = 9997
+  serviceId = "read-item"
+  path = "/v1/product/item/read"
+  method = "GET"
+
+[[httpRoutes]]
+  url = "http://deploy-go-backend-1"
+  port = 9997
+  serviceId = "create-item"
+  path = "/v1/product/item/create"
+  method = "POST"
+
+[[httpRoutes]]
+  url = "http://deploy-go-backend-1"
+  port = 9997
+  serviceId = "update-item"
+  path = "/v1/product/item/update"
+  method = "PUT"
+
+[[httpRoutes]]
+  url = "http://deploy-go-backend-1"
+  port = 9997
+  serviceId = "delete-item"
+  path = "/v1/product/item/delete"
+  method = "DELETE"
+
+  
+
+#product-group
+[[httpRoutes]]
+  url = "http://deploy-go-backend-1"
+  port = 9997
+  serviceId = "read-product-group"
+  path = "/v1/product/product-group/read"
+  method = "GET"
+
+[[httpRoutes]]
+  url = "http://deploy-go-backend-1"
+  port = 9997
+  serviceId = "create-product-group"
+  path = "/v1/product/product-group/create"
+  method = "POST"
+
+[[httpRoutes]]
+  url = "http://deploy-go-backend-1"
+  port = 9997
+  serviceId = "update-product-group"
+  path = "/v1/product/product-group/update"
+  method = "PUT"
+
+[[httpRoutes]]
+  url = "http://deploy-go-backend-1"
+  port = 9997
+  serviceId = "delete-product-group"
+  path = "/v1/product/product-group/delete"
+  method = "DELETE"
+
+#sale-channel
+[[httpRoutes]]
+  url = "http://deploy-go-backend-1"
+  port = 9997
+  serviceId = "read-sale-channel"
+  path = "/v1/sale/channel/read"
+  method = "GET"
+
+[[httpRoutes]]
+  url = "http://deploy-go-backend-1"
+  port = 9997
+  serviceId = "create-sale-channel"
+  path = "/v1/sale/channel/create"
+  method = "POST"
+
+[[httpRoutes]]
+  url = "http://deploy-go-backend-1"
+  port = 9997
+  serviceId = "update-sale-channel"
+  path = "/v1/sale/channel/update"
+  method = "PUT"
+
+[[httpRoutes]]
+  url = "http://deploy-go-backend-1"
+  port = 9997
+  serviceId = "delete-sale-channel"
+  path = "/v1/sale/channel/delete"
+  method = "DELETE"
+
+#sale-order
+[[httpRoutes]]
+  url = "http://deploy-go-backend-1"
+  port = 9997
+  serviceId = "read-sale-order"
+  path = "/v1/sale/order/read"
+  method = "GET"
+
+[[httpRoutes]]
+  url = "http://deploy-go-backend-1"
+  port = 9997
+  serviceId = "create-sale-order"
+  path = "/v1/sale/order/create"
+  method = "POST"
+
+
+#migrate
+[[httpRoutes]]
+  url = "http://deploy-go-backend-1"
+  port = 9997
+  serviceId = "auto-migrate"
+  path = "/v1/migrate/auto-migrate"
+  method = "GET"
+
+#index
+[[httpRoutes]]
+  url = "http://deploy-go-backend-1"
+  port = 9997
+  serviceId = "get-index"
+  path = "/v1/index/get"
+  method = "GET"
+
+

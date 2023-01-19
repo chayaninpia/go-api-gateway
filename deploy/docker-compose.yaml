@@ -1,0 +1,12 @@
+version: '2'
+services:
+  go-apigw:
+    image: 'go-api-gateway'
+    ports:
+      - '30001:30001'
+    networks:
+      - backend
+      
+networks:
+  backend:
+    name: backend
