@@ -20,19 +20,3 @@ COPY --from=build /go-api-gateway /app/go-api-gateway
 RUN apk update && apk add nano 
 
 CMD [ "/app/go-api-gateway" ]
-
-# FROM golang:1.18-alpine AS build
-# RUN apk add alpine-sdk
-# # ADD . /app
-# WORKDIR /app
-# COPY *.go ./
-# COPY go.mod /app
-# COPY go.sum /app
-# RUN go mod download
-# RUN GOOS=linux GOARCH=amd64 go build -o /go-api-gateway -tags musl
-
-# FROM alpine:latest as runner
-# WORKDIR /app
-# COPY --from=build /go-api-gateway /app/go-api-gateway 
-# RUN apk update && apk add nano 
-# CMD [ "/app/go-api-gateway" ]
