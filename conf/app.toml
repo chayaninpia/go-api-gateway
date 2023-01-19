@@ -1,0 +1,10 @@
+
+[apigw]
+  serverAddress = "http://127.0.0.1"
+  serverPort = 30001
+  rateLimit = 100
+  crypto = "nkjnj32nof2hee98hneni2oi0923ujcdkjw09f032jocj0w9j9020j2jf"
+
+[kafka]
+  serverAddress = "localhost"
+  serverPort = 9092

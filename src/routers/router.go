@@ -1,13 +1,11 @@
 package routers
 
 import (
-	"apigw/src/utils/kafkax"
 	"fmt"
 	"log"
 	"os"
 	"time"
 
-	_ "github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/fatih/color"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
@@ -27,7 +25,6 @@ type HttpRoutes struct {
 }
 
 type Handler struct {
-	*kafkax.KafkaClient
 	HttpRoutes map[string]HttpRoutes
 }
 
@@ -38,20 +35,9 @@ func Init() {
 	rps := viper.GetInt(`apigw.rateLimit`)
 	limit = ratelimit.New(rps)
 
-	pro, con := kafkax.InitKafka()
-	defer pro.Close()
-	defer con.Close()
-
 	h := &Handler{
-		KafkaClient: &kafkax.KafkaClient{
-			P: pro,
-			C: con,
-		},
+		HttpRoutes: initRoutes(),
 	}
-
-	h.WatcherProducer()
-
-	h.HttpRoutes = initRoutes()
 
 	r := gin.Default()
 

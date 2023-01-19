@@ -2,6 +2,7 @@ package routers
 
 import (
 	"apigw/src/utils/cryptox"
+	"apigw/src/utils/kafkax"
 	"encoding/json"
 	"io/ioutil"
 	"log"
@@ -41,13 +42,18 @@ func (h *Handler) Messenger(c *gin.Context) {
 	}
 
 	//sent request
-	h.Producer(request.ServiceID, []byte(reqEncrypt))
+	if err := kafkax.Producer([]byte(reqEncrypt), request.ServiceID, 0); err != nil {
+		log.Fatalln(err.Error())
+	}
 
 	//recive response
-	msg := h.Consumer(request.ServiceID)
+	msg, err := kafkax.Consumer(request.ServiceID, 0)
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
 
 	//decrypt
-	respDecrypt, err := cryptox.Decrypt(string(msg.Value), crypto)
+	respDecrypt, err := cryptox.Decrypt(string(msg), crypto)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
