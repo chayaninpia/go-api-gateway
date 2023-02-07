@@ -1,15 +1,14 @@
 package routers
 
 import (
-	"apigw/src/utils/cryptox"
 	"apigw/src/utils/kafkax"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 )
 
 type Request struct {
@@ -25,45 +24,96 @@ type Response struct {
 
 func (h *Handler) Messenger(c *gin.Context) {
 	request := &Request{}
-	crypto := viper.GetString(`apigw.crypto`)
+	// crypto := viper.GetString(`apigw.crypto`)
 	pathWithoutQuery := c.Request.URL.Path
 	request.Header = c.Request.Header.Clone()
-	request.ServiceID = h.HttpRoutes[pathWithoutQuery].ServiceID
+	pathWithMethod := fmt.Sprintf("%s|%s", pathWithoutQuery, c.Request.Method)
+
+	if checkRouteAndMethod(h.HttpRoutes, pathWithMethod) {
+		c.JSON(http.StatusNotFound, Response{
+			Code:    http.StatusNotFound,
+			Message: `Not found path : ` + pathWithoutQuery + ` or wrong method`,
+		})
+	}
+
+	request.ServiceID = h.HttpRoutes[pathWithMethod].ServiceID
 	requestBody, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
-		log.Fatalln(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": err.Error(),
+			"data":    nil,
+		})
+		panic(err)
 	}
 	request.Body = requestBody
 
-	//encrypt
-	reqEncrypt, err := cryptox.Encrypt(request, crypto)
-	if err != nil {
-		log.Fatalln(err.Error())
-	}
-
+	// //encrypt
+	// reqEncrypt, err := cryptox.Encrypt(request.Body, crypto)
+	// if err != nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{
+	// 		"code":    http.StatusInternalServerError,
+	// 		"message": err.Error(),
+	// 		"data":    nil,
+	// 	})
+	// 	panic(err)
+	// }
 	//sent request
-	if err := kafkax.Producer([]byte(reqEncrypt), request.ServiceID, 0); err != nil {
-		log.Fatalln(err.Error())
+	log.Println(string(request.Body))
+	if err := kafkax.Producer(c, request.Body, request.ServiceID, 0); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": err.Error(),
+			"data":    nil,
+		})
+		panic(err)
 	}
 
 	//recive response
-	msg, err := kafkax.Consumer(request.ServiceID, 0)
+	msg, err := kafkax.Consumer(c, request.ServiceID, 1)
 	if err != nil {
-		log.Fatalln(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": err.Error(),
+			"data":    nil,
+		})
+		panic(err)
 	}
-
+	log.Println(string(msg))
 	//decrypt
-	respDecrypt, err := cryptox.Decrypt(string(msg), crypto)
-	if err != nil {
-		log.Fatalln(err.Error())
+	// respDecrypt, err := cryptox.Decrypt(msg, crypto)
+	// if err != nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{
+	// 		"code":    http.StatusInternalServerError,
+	// 		"message": err.Error(),
+	// 		"data":    nil,
+	// 	})
+	// 	panic(err)
+	// }
+	// log.Println(string(respDecrypt))
+	var response interface{}
+	if err := json.Unmarshal(msg, &response); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": err.Error(),
+			"data":    nil,
+		})
+		panic(err)
 	}
 
-	response := Response{}
-	if err := json.Unmarshal(respDecrypt, &response); err != nil {
-		log.Fatalln(err.Error())
-	}
+	c.JSON(http.StatusOK, gin.H{
+		"code":    http.StatusOK,
+		"message": nil,
+		"data":    response,
+	})
+}
 
-	c.JSON(http.StatusOK, response)
+func checkRouteAndMethod(httpRoutes map[string]HttpRoutes, pathWithMethod string) bool {
+
+	if _, exist := httpRoutes[pathWithMethod]; exist {
+		return true
+	}
+	return false
 }
 
 // func (h *Handler) Endpoints(c *gin.Context) {
@@ -135,14 +185,4 @@ func (h *Handler) Messenger(c *gin.Context) {
 
 // 	return &res, nil
 
-// }
-
-// func checkRouteAndMethod(httpRoutes map[string]HttpRoutes, pathWithoutQuery string, method string) bool {
-
-// 	if value, exist := httpRoutes[pathWithoutQuery]; exist {
-// 		if value.Method == method {
-// 			return true
-// 		}
-// 	}
-// 	return false
 // }

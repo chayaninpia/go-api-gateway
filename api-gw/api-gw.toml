@@ -2,6 +2,13 @@
 [[httpRoutes]]
   url = "http://deploy-go-backend-1"
   port = 9997
+  serviceId = "pdst001"
+  path = "/v1/product/stock"
+  method = "GET"
+
+[[httpRoutes]]
+  url = "http://deploy-go-backend-1"
+  port = 9997
   serviceId = "read-stock"
   path = "/v1/product/stock"
   method = "GET"

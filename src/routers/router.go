@@ -8,6 +8,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/gin-gonic/gin"
+	"github.com/segmentio/kafka-go"
 	"github.com/spf13/viper"
 	"go.uber.org/ratelimit"
 )
@@ -28,6 +29,10 @@ type Handler struct {
 	HttpRoutes map[string]HttpRoutes
 }
 
+func NewHandler() *Handler {
+	return &Handler{}
+}
+
 func Init() {
 
 	fmt.Fprintln(os.Stdout, `[GIN-debug] Start Initial Gin Engine`)
@@ -35,14 +40,15 @@ func Init() {
 	rps := viper.GetInt(`apigw.rateLimit`)
 	limit = ratelimit.New(rps)
 
-	h := &Handler{
-		HttpRoutes: initRoutes(),
-	}
+	h := NewHandler()
+	h.HttpRoutes = initRoutes()
 
 	r := gin.Default()
 
 	r.Use(leakBucket())
-
+	if err := InitKafkaTopic(); err != nil {
+		log.Println(err.Error())
+	}
 	r.NoRoute(h.Messenger)
 
 	port := `:` + viper.GetString(`apigw.serverPort`)
@@ -59,7 +65,7 @@ func initRoutes() map[string]HttpRoutes {
 
 	viper.UnmarshalKey(`httpRoutes`, &httpRoutes)
 	for _, v := range httpRoutes {
-		httpRoutesMap[v.Path] = HttpRoutes{
+		httpRoutesMap[fmt.Sprintf("%s|%s", v.Path, v.Method)] = HttpRoutes{
 			Path:      v.Path,
 			Method:    v.Method,
 			Url:       v.Url,
@@ -77,4 +83,24 @@ func leakBucket() gin.HandlerFunc {
 		log.Print(color.CyanString("Last Request period : [ %v ] ", now.Sub(prev)))
 		prev = now
 	}
+}
+
+func InitKafkaTopic() error {
+	server := viper.GetString(`kafka.serverAddress`)
+	port := viper.GetString(`kafka.serverPort`)
+
+	conn, err := kafka.Dial("tcp", fmt.Sprintf("%s:%s", server, port))
+	if err != nil {
+		return fmt.Errorf("failed to dial leader: %s", err.Error())
+	}
+
+	if err := conn.CreateTopics(kafka.TopicConfig{
+		Topic:             "pdst001",
+		NumPartitions:     2,
+		ReplicationFactor: 1,
+	}); err != nil {
+		return err
+	}
+
+	return nil
 }

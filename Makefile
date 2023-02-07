@@ -9,3 +9,9 @@ run:
 
 stop:
 	docker-compose -f deploy/docker-compose.yaml down
+	
+runkaf:
+	docker-compose -f deploy/kafka.yaml up -d
+
+stopkaf:
+	docker-compose -f deploy/kafka.yaml down

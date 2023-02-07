@@ -9,20 +9,28 @@ import (
 	"github.com/spf13/viper"
 )
 
-func Producer(msg []byte, topic string, partition int) error {
+func Producer(ctx context.Context, msg []byte, topic string, partition int) error {
 
 	// to produce messages
 	server := viper.GetString(`kafka.serverAddress`)
 	port := viper.GetString(`kafka.serverPort`)
 
-	conn, err := kafka.DialLeader(context.Background(), "tcp", fmt.Sprintf("%s:%s", server, port), topic, partition)
+	conn, err := kafka.DialLeader(ctx, "tcp", fmt.Sprintf("%s:%s", server, port), topic, partition)
 	if err != nil {
 		return fmt.Errorf("failed to dial leader: %s", err.Error())
 	}
 
 	conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+
+	// msgMarshal, err := json.Marshal(msg)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to marshal: %s", err.Error())
+	// }
+
 	_, err = conn.WriteMessages(
-		kafka.Message{Value: msg},
+		kafka.Message{
+			Key:   []byte(time.Now().String()),
+			Value: msg},
 	)
 	if err != nil {
 		return fmt.Errorf("failed to write messages: %s", err.Error())

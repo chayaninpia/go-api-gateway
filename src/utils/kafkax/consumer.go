@@ -3,39 +3,52 @@ package kafkax
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/segmentio/kafka-go"
 	"github.com/spf13/viper"
 )
 
-func Consumer(topic string, partition int) ([]byte, error) {
+func Consumer(ctx context.Context, topic string, partition int) ([]byte, error) {
 	// to consume messages
 	server := viper.GetString(`kafka.serverAddress`)
 	port := viper.GetString(`kafka.serverPort`)
 
-	conn, err := kafka.DialLeader(context.Background(), "tcp", fmt.Sprintf("%s:%s", server, port), topic, partition)
-	if err != nil {
-		return nil, fmt.Errorf("failed to dial leader: %s", err.Error())
-	}
+	// conn, err := kafka.DialLeader(context.Background(), "tcp", fmt.Sprintf("%s:%s", server, port), topic, partition)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to dial leader: %s", err.Error())
+	// }
+	reader := kafka.NewReader(kafka.ReaderConfig{
+		Brokers:   []string{fmt.Sprintf("%s:%s", server, port)},
+		Topic:     topic,
+		Partition: partition,
+		MaxBytes:  10e5,
+	})
 
-	conn.SetReadDeadline(time.Now().Add(10 * time.Second))
-
-	b := make([]byte, 10e3) // 10KB max per message
+	msg := kafka.Message{}
 	for {
-		_, err := conn.Read(b)
+
+		m, err := reader.FetchMessage(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("read msg failed: %s", err.Error())
 		}
-		if len(b) > 0 {
+
+		if len(m.Value) > 0 {
+			reader.CommitMessages(ctx, m)
+			msg = m
 			break
 		}
 	}
 
-	if err := conn.Close(); err != nil {
+	if err := reader.Close(); err != nil {
 		return nil, fmt.Errorf("failed to close connection: %s", err)
 	}
-	return b, nil
+
+	// var msg string
+	// log.Println(string(b))
+	// if err := json.Unmarshal(b, &msg); err != nil {
+	// 	return "", fmt.Errorf("unmarshal msg failed: %s", err.Error())
+	// }
+	return msg.Value, nil
 }
 
 // func Consumer(c *kafka.Consumer, topic string) *kafka.Message {
